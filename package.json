@@ -1,0 +1,17 @@
+{
+  "name": "pi-akasha",
+  "version": "0.1.0",
+  "description": "Connects pi to akasha, a local knowledge base for coding agents: registers the akasha MCP server, injects the session brief on the first prompt, and reindexes markdown files pi writes.",
+  "keywords": ["pi-package", "akasha", "knowledge-base", "mcp"],
+  "license": "MIT",
+  "author": "Ahmad Nur Salim",
+  "repository": { "type": "git", "url": "git+https://github.com/anuress/pi-akasha.git" },
+  "type": "module",
+  "scripts": { "test": "node --test test/" },
+  "pi": {
+    "extensions": ["./extensions/index.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}
