@@ -36,7 +36,21 @@ function fakePi() {
 test("registers the akasha MCP server over stdio", () => {
   const pi = fakePi();
   piAkasha(pi);
-  assert.deepEqual(pi.mcp, [["akasha", { command: "akasha", args: ["serve"] }]]);
+  assert.equal(pi.mcp.length, 1);
+  const [name, config] = pi.mcp[0];
+  assert.equal(name, "akasha");
+  assert.equal(config.command, "akasha");
+  assert.deepEqual(config.args, ["serve"]);
+});
+
+test("declares akasha's tools directly to the model", () => {
+  // The brief tells the model to call knowledge_search first; pi's default exposure would
+  // hide the tool behind codemode scripts, so the model could not follow it.
+  const pi = fakePi();
+  piAkasha(pi);
+  const [, config] = pi.mcp[0];
+  assert.equal(config.exposure, "direct");
+  assert.equal(typeof config.description, "string");
 });
 
 test("brief is held at session_start and injected exactly once", async () => {

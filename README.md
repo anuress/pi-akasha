@@ -25,8 +25,10 @@ Or try it for one run without installing: `pi -e ./pi-akasha/extensions/index.ts
 
 - **Tools.** pi supports MCP natively, so the extension registers `akasha serve` as the
   `akasha` MCP server (`mcp__akasha__knowledge_search`, `..._get`, `..._write`, ...).
-  Destructive operations are not exposed over MCP; they stay on the akasha CLI. An
-  `akasha` entry in `~/.pi/agent/mcp.json` takes precedence over this registration.
+  The tools use `direct` exposure, so the model sees them like built-in tools rather than
+  only through codemode scripts; the set is small. Destructive operations are not exposed
+  over MCP; they stay on the akasha CLI. An `akasha` entry in `~/.pi/agent/mcp.json` takes
+  precedence over this registration, which is also how to change the exposure.
 - **Session brief.** At session start the extension runs
   `akasha hook session-start --defer-refresh` and injects its output once, as an `akasha`
   message on the first prompt.

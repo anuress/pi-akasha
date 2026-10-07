@@ -31,7 +31,14 @@ function runAkasha(args: string[], stdin = ""): Promise<string> {
 
 export default function piAkasha(pi: any) {
   try {
-    pi.registerMcpServer("akasha", { command: "akasha", args: ["serve"] });
+    // Direct exposure: the brief tells the model to search first, so the tools must be
+    // declared to it, not left behind codemode scripts. The set is small.
+    pi.registerMcpServer("akasha", {
+      command: "akasha",
+      args: ["serve"],
+      exposure: "direct",
+      description: "Local knowledge base: search before investigating, write findings back.",
+    });
   } catch {
     // An mcp.json entry of the same name wins; any other failure must not stop pi loading.
   }
