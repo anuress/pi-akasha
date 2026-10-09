@@ -32,8 +32,12 @@ Or try it for one run without installing: `pi -e ./pi-akasha/extensions/index.ts
 - **Session brief.** At session start the extension runs
   `akasha hook session-start --defer-refresh` and injects its output once, as an `akasha`
   message on the first prompt.
-- **Reindexing.** After pi's `write` or `edit` tool changes a `.md` file, the extension runs
-  `akasha hook post-tool` so the file is reindexed if it lives under an index root.
+- **Reindexing and the write nudge.** After every `write` or `edit`, and every akasha
+  recording tool, the extension runs `akasha hook post-tool` with the session id. A
+  changed `.md` file is reindexed if it lives under an index root. After a run of edits
+  with nothing recorded, akasha replies with a one-time reminder, which is appended to
+  the tool result the model sees. Needs akasha 0.0.3 or later; older versions only
+  reindex.
 
 ## Fail-open
 

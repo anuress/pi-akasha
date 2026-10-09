@@ -75,14 +75,66 @@ test("post-tool gets the tool_name/tool_input payload for a written .md file", a
   assert.deepEqual(JSON.parse(c.stdin), { tool_name: "write", tool_input: input });
 });
 
-test("non-.md paths and non-write tools never spawn akasha", async () => {
+test("tools that neither edit nor record never spawn akasha", async () => {
+  // A process per read or bash call would cost more than the hook is worth.
   const { calls } = setup();
   const pi = fakePi();
   piAkasha(pi);
-  await pi.handlers.tool_result({ toolName: "write", input: { path: "/x/a.ts" } });
   await pi.handlers.tool_result({ toolName: "read", input: { path: "/x/a.md" } });
-  await pi.handlers.tool_result({ toolName: "edit", input: {} });
+  await pi.handlers.tool_result({ toolName: "bash", input: { command: "ls" } });
+  await pi.handlers.tool_result({ toolName: "mcp__akasha__knowledge_search", input: {} });
   assert.deepEqual(calls(), []);
+});
+
+const ctx = { sessionManager: { getSessionId: () => "sess-1" } };
+
+test("every edit reaches post-tool with the session id, so akasha can count edits", async () => {
+  const { calls } = setup();
+  const pi = fakePi();
+  piAkasha(pi);
+  await pi.handlers.tool_result({ toolName: "edit", input: { path: "/x/a.ts" } }, ctx);
+  const [c] = calls();
+  assert.equal(c.argv, "hook post-tool");
+  assert.deepEqual(JSON.parse(c.stdin),
+    { session_id: "sess-1", tool_name: "edit", tool_input: { path: "/x/a.ts" } });
+});
+
+test("akasha's recording tools reach post-tool, so the edit count restarts", async () => {
+  const { calls } = setup();
+  const pi = fakePi();
+  piAkasha(pi);
+  for (const name of ["write", "append", "update"]) {
+    await pi.handlers.tool_result({ toolName: `mcp__akasha__knowledge_${name}`, input: {} }, ctx);
+  }
+  assert.deepEqual(calls().map((c) => JSON.parse(c.stdin).tool_name), [
+    "mcp__akasha__knowledge_write", "mcp__akasha__knowledge_append",
+    "mcp__akasha__knowledge_update"]);
+});
+
+test("a nudge from post-tool is appended to the tool result the model sees", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "pi-akasha-"));
+  const bin = join(dir, "akasha");
+  writeFileSync(bin, `#!/bin/sh
+cat >/dev/null
+echo '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"akasha: record it"}}'
+`);
+  chmodSync(bin, 0o755);
+  process.env.PATH = `${dir}:${process.env.PATH}`;
+  const pi = fakePi();
+  piAkasha(pi);
+  const original = [{ type: "text", text: "edited" }];
+  const out = await pi.handlers.tool_result(
+    { toolName: "edit", input: { path: "/x/a.ts" }, content: original }, ctx);
+  assert.deepEqual(out, { content: [...original, { type: "text", text: "akasha: record it" }] });
+});
+
+test("post-tool output that is not a nudge leaves the tool result alone", async () => {
+  setup();  // prints "brief text", which is not hook JSON
+  const pi = fakePi();
+  piAkasha(pi);
+  const out = await pi.handlers.tool_result(
+    { toolName: "edit", input: { path: "/x/a.ts" }, content: [] }, ctx);
+  assert.equal(out, undefined);
 });
 
 test("missing akasha (ENOENT) is fail-open", async () => {
