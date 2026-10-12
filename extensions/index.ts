@@ -6,8 +6,9 @@
  *   injects it once, on the first prompt (session_start has no way to add context).
  * - tool_result: after every write/edit and every akasha recording tool, runs
  *   `akasha hook post-tool` with the session id. akasha reindexes a written .md file and,
- *   after a run of edits with nothing recorded, replies with a nudge that is appended to
- *   the tool result the model sees.
+ *   after a run of edits with nothing recorded, replies with a nudge, and replies with
+ *   any gotchas scoped to the edited file (matched from `cwd`); both are appended to the
+ *   tool result the model sees.
  *
  * Everything is fail-open: a missing or failing akasha never blocks pi.
  */
@@ -72,6 +73,7 @@ export default function piAkasha(pi: any) {
         ["hook", "post-tool"],
         JSON.stringify({
           session_id: ctx?.sessionManager?.getSessionId?.(),
+          cwd: ctx?.cwd,
           tool_name: name,
           tool_input: event.input,
         }),

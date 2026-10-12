@@ -99,6 +99,14 @@ test("every edit reaches post-tool with the session id, so akasha can count edit
     { session_id: "sess-1", tool_name: "edit", tool_input: { path: "/x/a.ts" } });
 });
 
+test("post-tool is told the session cwd, so akasha can find the file's gotchas", async () => {
+  const { calls } = setup();
+  const pi = fakePi();
+  piAkasha(pi);
+  await pi.handlers.tool_result({ toolName: "write", input: { path: "a.kt" } }, { ...ctx, cwd: "/work" });
+  assert.equal(JSON.parse(calls()[0].stdin).cwd, "/work");
+});
+
 test("akasha's recording tools reach post-tool, so the edit count restarts", async () => {
   const { calls } = setup();
   const pi = fakePi();
