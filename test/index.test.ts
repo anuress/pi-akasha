@@ -53,14 +53,30 @@ test("declares akasha's tools directly to the model", () => {
   assert.equal(typeof config.description, "string");
 });
 
-test("brief is held at session_start and injected exactly once", async () => {
+test("brief is reloaded and injected after compaction", async () => {
   const { calls } = setup();
   const pi = fakePi();
   piAkasha(pi);
   await pi.handlers.session_start();
   assert.equal(calls()[0].argv, "hook session-start --defer-refresh");
-  const first = await pi.handlers.before_agent_start();
-  assert.deepEqual(first, { message: { customType: "akasha", content: "brief text", display: true } });
+  const expected = { message: { customType: "akasha", content: "brief text", display: true } };
+  assert.deepEqual(await pi.handlers.before_agent_start(), expected);
+  assert.equal(await pi.handlers.before_agent_start(), undefined);
+
+  await pi.handlers.session_compact();
+  assert.deepEqual(await pi.handlers.before_agent_start(), expected);
+  assert.equal(calls().length, 2);
+  assert.deepEqual(calls().map((call) => call.argv), [
+    "hook session-start --defer-refresh",
+    "hook session-start --defer-refresh",
+  ]);
+});
+
+test("a failing akasha on session_compact injects nothing and does not throw", async () => {
+  setup(3);
+  const pi = fakePi();
+  piAkasha(pi);
+  await pi.handlers.session_compact();
   assert.equal(await pi.handlers.before_agent_start(), undefined);
 });
 

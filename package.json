@@ -1,7 +1,7 @@
 {
   "name": "pi-akasha",
   "version": "0.1.0",
-  "description": "Connects pi to akasha, a local knowledge base for coding agents: registers the akasha MCP server, injects the session brief on the first prompt, reindexes markdown files pi writes, and passes on akasha's reminder to record findings.",
+  "description": "Connects pi to akasha, a local knowledge base for coding agents: registers the akasha MCP server, injects the session brief on the first prompt and after compaction, reindexes markdown files pi writes, and passes on akasha's reminder to record findings.",
   "keywords": ["pi-package", "akasha", "knowledge-base", "mcp"],
   "license": "MIT",
   "author": "Ahmad Nur Salim",

@@ -2,8 +2,8 @@
  * pi-akasha — connects pi to akasha, a local knowledge base for coding agents.
  *
  * - MCP: registers `akasha serve` so pi gets the knowledge_* tools natively.
- * - session_start: runs `akasha hook session-start --defer-refresh`, holds the brief and
- *   injects it once, on the first prompt (session_start has no way to add context).
+ * - session_start and session_compact: run `akasha hook session-start --defer-refresh`, hold
+ *   the brief and inject it on the first prompt and again after each successful compaction.
  * - tool_result: after every write/edit and every akasha recording tool, runs
  *   `akasha hook post-tool` with the session id. akasha reindexes a written .md file and,
  *   after a run of edits with nothing recorded, replies with a nudge, and replies with
@@ -49,13 +49,16 @@ export default function piAkasha(pi: any) {
 
   let held = "";
 
-  pi.on("session_start", async () => {
+  const loadBrief = async () => {
     try {
       held = (await runAkasha(["hook", "session-start", "--defer-refresh"])).trim();
     } catch {
       held = "";
     }
-  });
+  };
+
+  pi.on("session_start", loadBrief);
+  pi.on("session_compact", loadBrief);
 
   pi.on("before_agent_start", async () => {
     const text = held;
